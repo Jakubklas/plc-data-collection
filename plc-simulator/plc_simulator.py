@@ -38,14 +38,14 @@ class IndustrialPLCSimulator:
         }
 
         # Modbus data blocks (registers), i.e. PLC memory areas
-        self.holding_registers = ModbusSequentialDataBlock(0, [0]*100)                          #TODO: Need to bettet understand the HRs
+        self.holding_registers = ModbusSequentialDataBlock(0, [0]*100)                          #TODO: Need to better understand the HRs
 
         # Modbus Context (like a PLC memory map)
         self.context = ModbusSlaveContext(
             di = None,                      # Dicrete inputs
             co = None,                      # Coils, digital outputs
             hr = self.holding_registers,    # Holding registers for collected data
-            ir = None                       # Inpute Registers (Read-only sensors)
+            ir = None                       # Input Registers (Read-only sensors)
         )
 
         # Wrapping it as a server supporting multiple slave devices
@@ -120,7 +120,7 @@ class IndustrialPLCSimulator:
 
     def get_sensor_values(self, sensor_name):
         """
-        Retreives loaded sensor values.
+        Retrieves loaded sensor values.
         """
         if sensor_name in self.sensors:
             address = self.sensors[sensor_name]["address"]

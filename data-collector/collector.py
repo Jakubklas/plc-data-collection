@@ -28,7 +28,7 @@ class PLCConnection:
         self.port = port
         self.timeout = timeout
         self.client = None
-        self.connected = None
+        self.connected = False
         self.last_error = None
 
         # Define the sensor map
@@ -196,7 +196,7 @@ class IndustrialDataCollector:
             'start_time': time.time()
         }
 
-    def connect_tosystems(self):
+    def connect_to_systems(self):
        logger.info("Connecting to industrial systems...")
 
        if not self.db.connect():
@@ -217,12 +217,12 @@ class IndustrialDataCollector:
         """
         Main data collection loop.
         """
-        logger.info("Starting the data collaction loop.")
+        logger.info("Starting the data collection loop.")
         read_interval = 5
 
         while self.running.is_set():
             try:
-                # Ensuring actuve connection
+                # Ensuring active connection
                 if not self.plc.connected:
                     if not self.plc.connect():
                         self.stats["connection_errors"] += 1
@@ -273,15 +273,15 @@ class IndustrialDataCollector:
         
         # Signal handler for graceful shutdowns
         def _signal_handler(signum, frame):
-            logger.info(f"Received signal {signum}, initializing shut-down.")
+            logger.info(f"Received signal {signum}, initiating shut-down.")
             self.shutdown()
 
         signal.signal(signal.SIGINT, _signal_handler)
-        signal.signal(signal.SIGINT, _signal_handler)
+        signal.signal(signal.SIGTERM, _signal_handler)
 
         try:
-            # Connectig to systems
-            if not self.connect_tosystems():
+            # Connecting to systems
+            if not self.connect_to_systems():
                 logger.error("Failed to connect to systems.")
                 return 1
             
@@ -300,7 +300,7 @@ class IndustrialDataCollector:
 
 
     def cleanup(self):
-        """Disconnects ans shuts down."""
+        """Disconnects and shuts down."""
         logger.info("Cleaning up resources...")
 
         if self.plc:
@@ -308,19 +308,33 @@ class IndustrialDataCollector:
         if self.db:
             self.db.disconnect()
 
-        logger.info("Cleaning up resources...")
+        logger.info("Cleanup complete.")
         
 
     def shutdown(self):
         """
-        Graceful loop shut-down, ensuring no unsavec data is lost.
+        Graceful loop shut-down, ensuring no unsaved data is lost.
         """
         logger.info("Starting graceful shut-down...")
         self.running.clear()
         self.flush_buffer_to_database()
 
-        logger.info("Gracefil shut-down complete.")
+        logger.info("Graceful shut-down complete.")
         
+
+    def _stats_loop(self):
+        """Periodically log statistics about data collection."""
+        while self.running.is_set():
+            try:
+                runtime = time.time() - self.stats['start_time']
+                logger.info(f"Stats - Runtime: {runtime:.1f}s, Collected: {self.stats['readings_collected']}, "
+                           f"Stored: {self.stats['readings_stored']}, "
+                           f"Connection errors: {self.stats['connection_errors']}, "
+                           f"DB errors: {self.stats['database_errors']}")
+                time.sleep(60)  # Log stats every minute
+            except Exception as e:
+                logger.error(f"Error in stats loop: {e}")
+                break
 
 
 
