@@ -180,7 +180,7 @@ class DataBuffer:
         
 
 class IndustrialDataCollector:
-    def __init__(self, plc_host="plc_simulator", db_config=None):
+    def __init__(self, plc_host="plc-simulator", db_config=None):
        self.plc = PLCConnection(plc_host)
        self.buffer = DataBuffer()
        self.db = IndustrialDatabaseManager(db_config)
